@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="View ERC20 token balances and decentralized exchange trading history.">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png?1">
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png?1">
+  <link rel="icon" type="image/png" sizes="64x64" href="./favicon-64x64.png?1">
+
+  <title>Delta Balances</title>
+
+  <!-- CSS:  Bootstrap, adminLTE, fontawesome & custom -->
+  <link href="css/combinedStyles.css" rel="stylesheet">
+
+  <!-- JS  jquery -->
+  <script src="js/jquery-3.2.1.min.js"></script>
+
+  <!-- JS  datatables -->
+  <script src="js/jquery.dataTables.fixed.min.js"></script>
+
+  <!-- JS  Bootstrap + adminLTE (menu theme) + blockies ethereum -->
+  <script src="js/bootstrap.adminlte.blockies.min.js"></script>
+
+  <script src="js/bootstrap-toggle.min.js"></script>
+  <script src="js/bootstrap-select.min.js"></script>
+
+
+
+  <!-- JS socketIO  for exchange prices -->
+  <script src="js/socket.io.js" defer></script>
+
+  <!-- JS  Token discover / loading -->
+  <script src="backupTokens.js"></script>
+  <script src="loadTokens.js"></script>
+
+  <!-- JS  Main functionality -->
+  <!--  config excluded from bundle -->
+  <script src="configBundle.js"></script>
+  <script src="bundle.min.js"></script>
+  <script src="index.js"></script>
+
+</head>
+
+<body class="hold-transition skin-blue sidebar-mini">
+
+  <!-- Main Header -->
+  <header class="main-header">
+
+    <!-- Logo -->
+    <a href="index.html" class="logo hidden-xs">
+      <!-- mini logo for sidebar mini 50x50 pixels -->
+      <span class="logo-mini">
+        <img id="logo1" align="middle" src="logo-white.png" alt="logo">
+      </span>
+      <!-- logo for regular state and mobile devices -->
+      <span class="logo-lg">
+        <img id="logo2" align="middle" src="logo-white.png" alt="logo">
+        <span class="homeLink1">Delta</span>
+        <span class="homeLink2">Balances</span>
+      </span>
+    </a>
+
+    <!-- Header Navbar -->
+    <nav class="navbar navbar-static-top" role="navigation">
+
+      <!-- Sidebar toggle button-->
+      <a href="#" class="sidebar-toggle" data-toggle="push-menu" role="button">
+        <span class="sr-only">Toggle navigation</span>
+      </a>
+
+      <!-- mobile only logo -->
+      <ul class="visible-xs nav navbar-nav pull-left navbar-logo" style="margin-left:0px; margin-top:5px;font-size:20px; height:30px; line-height:30px;">
+        <li class="">
+          <a href="index.html" class="dropdown">
+            <span class="homeLink1">Delta</span>
+            <span class="homeLink2">Balances</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- header search -->
+      <ul class="nav  navbar-nav pull-left customWidth1" style=" border: none;">
+        <li class="navbar-form" style="width:100%; padding:0px;  ">
+          <div class="input-group" style="width:100%;">
+            <input type="text" id="address" class="form-control custom" placeholder="Ethereum address, transaction hash">
+            <span class="input-group-btn">
+              <button id="refreshButton" onClick="myClick()" class="btn btn-flat">
+                <i id="refreshButtonSearch" class="fa fa-search" aria-hidden="true"></i>
+                <i id="refreshButtonLoading" style="display:none" class="fa fa-refresh fa-spin" aria-hidden="true"></i>
+              </button>
+            </span>
+          </div>
+        </li>
+      </ul>
+      <ul class="nav navbar-nav pull-right navbar-user">
+        <!-- Control Sidebar Toggle Button -->
+        <li class="dropdown user user-menu">
+          <!-- Menu Toggle Button -->
+          <a href="#" id="userToggle" class="hidden dropdown-toggle" data-toggle="control-sidebar">
+            <!-- The user image in the navbar-->
+            <i id="userImage" class="user-image bg-red" style="width:32px; height:32px;"></i>
+            <!-- hidden-xs hides the username on small devices so only the image appears. -->
+            <span id="currentAddr2" class="hidden-xs">0x......</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- top alert message -->
+  <div class="alert alert-danger alert-top" style="display:none;" onclick="hideError()" id='error' role="alert">
+    <strong>Error</strong>
+    <span id="errortext"></span>
+    <button type="button" class="close" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="alert alert-warning alert-top alert-dismissible" onclick="hideHint()" style="display:none;" role="alert" id='hint'>
+    <strong>Hint</strong>
+    <span id="hinttext"></span>
+    <button type="button" class="close" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+
+  <!-- Left side column. contains the logo and sidebar -->
+  <aside class="main-sidebar">
+
+    <!-- sidebar: style can be found in sidebar.less -->
+    <section class="sidebar">
+
+      <!-- Sidebar Menu -->
+      <ul class="sidebar-menu" data-widget="tree">
+        <li id="homeLinkHeader" class="header">
+          <a href="index.html">
+            <span class="homeLink3">Delta</span>
+            <span class="homeLink4">Balances</span>
+          </a>
+        </li>
+        <li class="header">Multi Exchange</li>
+        <!-- Optionally, you can add icons to the links -->
+        <li class="active">
+          <a id="overviewNav" href="index.html">
+            <i class="sidebar-icon icon-balances"></i>
+            <span>Token Balances</span>
+          </a>
+        </li>
+        <li>
+          <a id="recentNav" href="recent.html">
+            <i class="sidebar-icon icon-recent"></i>
+            <span>Recent Transactions</span>
+          </a>
+        </li>
+        <li>
+          <a id="histNav" href="trades.html">
+            <i class="sidebar-icon icon-book"></i>
+            <span>Trade History</span>
+          </a>
+        </li>
+        <li>
+          <a id="txNav" href="tx.html">
+            <i class="sidebar-icon icon-info"></i>
+            <span>Transaction Info</span>
+          </a>
+        </li>
+        <li class="header">Single exchange</li>
+        <li class="treeview menu">
+          <a href="#">
+            <i class="icon-book"></i>
+            <span>Exchange History</span>
+            <span class="pull-right-container">
+              <i class="fa fa-angle-left pull-right"></i>
+            </span>
+          </a>
+          <ul class="treeview-menu">
+            <li>
+              <a id="historyNav" href="history.html">
+                <i class="sidebar-icon icon-etherdelta"></i>
+                <span>EtherDelta
+                  <span class="text75">(ForkDelta)</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a id="historyNav2" href="history2.html">
+                <i class="sidebar-icon icon-tokenstore"></i>
+                <span>Token store</span>
+              </a>
+            </li>
+            <li>
+              <a id="historyNav4" href="history4.html">
+                <i class="sidebar-icon icon-zrx"></i>
+                <span>0x Protocol</span>
+              </a>
+            </li>
+            <li>
+              <a id="historyNav5" href="history5.html">
+                <i class="sidebar-icon icon-airswap"></i>
+                <span>AirSwap</span>
+              </a>
+            </li>
+            <li>
+              <a id="historyNav6" href="history6.html">
+                <i class="sidebar-icon icon-kyber"></i>
+                <span>Kyber Network</span>
+              </a>
+            </li>
+            <li>
+              <a id="historyNav7" href="history7.html">
+                <i class="sidebar-icon icon-oasis"></i>
+                <span>OasisDex</span>
+              </a>
+            </li>
+            <li>
+              <a id="historyNav8" href="history8.html">
+                <i class="sidebar-icon icon-enclaves"></i>
+                <span>EnclavesDex</span>
+              </a>
+            </li>
+            <li>
+              <a id="historyNav9" href="history9.html">
+                <strong class="sidebar-icon icon-ethen"> E</strong>
+                <span>ETHEN</span>
+              </a>
+            </li>
+            <li>
+              <a id="historyNav3" href="history3.html">
+                <i class="sidebar-icon icon-decentrex"></i>
+                <span>Decentrex</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="header">Links</li>
+        <li>
+          <a href="https://github.com/DeltaBalances/DeltaBalances.github.io" target="_blank">
+            <i class="fa fa-github"></i>
+            <span>GitHub</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://etherscan.io/address/0x3e25f0ba291f202188ae9bda3004a7b3a803599a#code" target="_blank">
+            <i class="fa fa-link"></i>
+            <span>Smart contract</span>
+          </a>
+        </li>
+        <li>
+          <a href="./old/index.html" target="_blank">
+            <i class="fa fa-link"></i>
+            <span>Deltabalances V1</span>
+          </a>
+        </li>
+      </ul>
+      <!-- /.sidebar-menu -->
+    </section>
+    <!-- /.sidebar -->
+  </aside>
+
+
+  <div class="wrapper">
+
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+      <!-- Content Header (Page header) -->
+      <!-- <section class="content-header">
+      <h1>
+        Token balances
+      </h1>
+    </section> -->
+
+      <!-- Main content -->
+      <section class="content container-fluid">
+
+        <div class="row">
+
+          <div class="col-sm-12 col-md-8 col-lg-7 s-fullwidth" style="overflow:hidden;">
+            <div class="box box-default bottom10M">
+              <div id="overviewOverlay" class="hidden-xs hidden-sm hidden-md hidden-lg overlay">
+                <i class="fa fa-refresh fa-spin dim"></i>
+              </div>
+              <!-- /.box-header -->
+              <div class="box-body noPadTop">
+                <div class="col-md-12 noPadM">
+                  <h2>Wallet overview</h2>
+                  <div style="white-space:nowrap; overflow:hidden;">
+                    <div id="addrIcon" class="hidden-xs" style="float:left; display: inline-block; padding-left: 1%;"></div>
+                    <div class="hidden-xs" style="padding-left: 3%; float:left;">
+                      <p style="line-height:64px;display: inline-block;"> </p>
+                    </div>
+                    <div style="float:left; white-space:nowrap;">
+                      <p style="line-height:64px; white-space:nowrap; font-size:21px; font-weight:normal; display: inline-block;" id="addr">Enter your public address </p>
+                    </div>
+                  </div>
+                  <table class="table table-sm" cellspacing="0" cellpadding="0" id="overviewTable">
+                    <tr>
+                      <td>
+                        <span class=" hidden-xs">Total ETH balance:</span>
+                        <span class=" visible-xs">Total ETH:</span>
+                      </td>
+                      <td id='ethbalance'></td>
+                      <td id='ethbalancePrice'></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <span class=" hidden-xs">Total Wrapped ETH:</span>
+                        <span class=" visible-xs">Wrapped ETH:</span>
+                      </td>
+                      <td id='wethbalance'></td>
+                      <td id='wethbalancePrice'></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <span class=" hidden-xs">Estimated token value:</span>
+                        <span class=" visible-xs">Token value:</span>
+                      </td>
+                      <td id='tokenbalance'></td>
+                      <td id='tokenbalancePrice'></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <span class=" hidden-xs">Estimated total value:</span>
+                        <span class=" visible-xs">Total value:</span>
+                      </td>
+                      <td id='totalbalance'></td>
+                      <td id='totalbalancePrice'></td>
+                    </tr>
+                  </table>
+                </div>
+                <!-- /.box-body -->
+              </div>
+              <!-- /.box -->
+            </div>
+          </div>
+
+          <div class="col-sm-12 col-md-4 col-lg-3 s-fullwidth">
+            <div id="settingbox" class="box box-default bottom10M">
+              <!-- /.box-header -->
+              <div class="box-header noPadTop">
+                <div class="col-md-12 noPadM">
+                  <h3>Settings</h3>
+                </div>
+                <div class="box-tools pull-right">
+                  <button id="collapseSettings" type="button" class="btn btn-box-tool" data-widget="collapse">
+                    <i id="settingToggleIcon" class="fa fa-minus"></i>
+                  </button>
+
+                </div>
+              </div>
+              <div id="setting-body" class="box-body noPadTop">
+                <div class="col-md-12 noPadM">
+                  <ul class="list-unstyled">
+                    <li>
+
+                      <li>
+                        <div class="form-group" style="float:left;Padding-right: 45px;">
+                          Total Value:
+                          <br>
+                          <select id="fiatSelect" onchange="selectFiat()" data-width="125px" class="selectpicker">
+                            <option value="0">ETH</option>
+                            <option value="1" selected>ETH & USD</option>
+                            <option value="2">ETH & EUR</option>
+                          </select>
+                        </div>
+                        <div class="form-group" style="float:left;">
+                          Price estimate:
+                          <br>
+                          <select id="priceSelect" onchange="selectPrice()" data-width="125px" class="selectpicker">
+                            <option value="0" selected>Highest Bid</option>
+                            <option value="1">Lowest Ask</option>
+                          </select>
+                        </div>
+                      </li>
+                      <li class="hidden">
+                        <input class="checkbox checkbox-info" type="checkbox" onclick="checkZero()" id="zero">
+                        <label for="zero">Hide zero balances</label>
+                      </li>
+                      <li>
+                        <div style="clear:both;"></div>
+                        <br>
+                        <input class="checkbox checkbox-info" type="checkbox" onclick="checkDecimal()" id="decimals">
+                        <label for="decimals">Show more decimals</label>
+                      </li>
+
+                  </ul>
+
+                </div>
+              </div>
+              <!-- /.box-body -->
+            </div>
+            <!-- /.box -->
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 col-lg-10">
+            <h4> Load deposited DEX balances: </h4>
+          </div>
+
+
+          <div class="col-sm-12 col-md-8 col-lg-7 noPadM">
+
+            <div class="form-group">
+              <select id="exchangeDropdown" data-width="100%" data-none-selected-text="Click to select one or more exchange(s)" class="selectpicker"
+                multiple>
+                <option data-subtext="ForkDelta">EtherDelta</option>
+                <option>IDEX</option>
+                <option>Token store</option>
+                <option>Enclaves</option>
+                <!-- <option>Ethen</option>-->
+                <option>SingularX</option>
+                <option>DEXY</option>
+                <option>EtherC</option>
+                <option data-subtext="(Discontinued)">Decentrex</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="col-xs-12 col-md-12 col-lg-10 s-fullwidth">
+
+            <div class="box box-default">
+              <!-- /.box-header -->
+              <div class="box-body noPadTop">
+                <div class="col-md-12 noPadM">
+                  <h2>Balances
+                    <button id='loadingBalances' onclick="getBalances()" class="fa fa-refresh" style="display:none;"></button>
+                    <!-- <span class="pull-right" style="display:inline-block; vertical-align: middle;font-weight: 400; font-size: 0.5em;">
+                      <input style="width:110px;" id="tablesearcher" class="search form-control" data-column="0" type="search" placeholder="filter tokens">
+                    </span>
+                    -->
+                  </h2>
+                  <table class="table" id="balanceProgress" style="float:left; padding-bottom:5px;">
+                    <thead></thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+
+                <div class="col-md-12 noPad">
+
+
+                  <table class="table table-striped" id="resultTable" style="width:100%">
+                    <thead></thead>
+                    <tbody></tbody>
+                  </table>
+                  <br>
+                </div>
+                <div class="col-md-12 noPadM">
+
+                  <span id="downloadBalances"></span>
+                  <p> Price estimates come from the ForkDelta & IDEX orderbooks</p>
+                  <span class="label label-primary">Name</span> Listed on one or more
+                  <span class="hidden-xs">supported</span> exchanges.
+                  <br>
+                  <span class="label label-warning">Name</span> Not listed, trades by address only.
+                </div>
+              </div>
+              <!-- /.box-body -->
+            </div>
+            <!-- /.box -->
+          </div>
+
+          <div class="col-xs-12 col-md-12 col-lg-10 s-fullwidth">
+            <div class="box box-default bottom10M">
+
+              <!-- /.box-header -->
+              <div class="box-body">
+                <div class="col-md-12 noPadM">
+                  Check deposited tokens in:
+                  <a href="https://etherdelta.com" target="_blank">EtherDelta</a> (
+                  <a href="https://forkdelta.github.io" target="_blank">ForkDelta</a>),
+                  <a href="https://token.store" target="_blank">Token Store</a>,
+                  <a href="https://www.idex.market" target="_blank">IDEX</a>,
+                  <a href="https://www.enclaves.io" target="_blank">EnclavesDex</a>,
+                  <a href="https://www.singularx.com" target="_blank">SingularX</a>,
+                  <a href="https://app.dexy.exchange" target="_blank">DEXY</a>,
+                  <a href="https://www.etherc.io" target="_blank">EtherC</a> and
+                  <a href="https://github.com/decentrex/decentrex.github.io/blob/master/index.md" target="_blank">Decentrex</a>.
+                  <br>Wallet balances include tokens traded on: 0x Relayers,
+                  <a href="https://airswap.io" target="_blank">AirSwap</a>,
+                  <a href="https://kyber.network" target="_blank">Kyber Network</a> and
+                  <a href="https://www.bancor.network" target="_blank">Bancor</a>.
+                </div>
+                <!-- /.box-body -->
+              </div>
+
+              <!-- /.box -->
+            </div>
+
+          </div>
+      </section>
+      <!-- /.content -->
+      </div>
+      <!-- /.content-wrapper -->
+
+      <!-- Main Footer -->
+      <footer class="main-footer">
+        <!-- To the right -->
+        <div class="pull-right hidden-xs">
+        </div>
+        <p> Powered by
+          <a target="_blank" href="https://etherscan.io/">Etherscan</a> and
+          <a target="_blank" href="https://infura.io/">Infura</a>
+          <br> Contact:
+          <a target="_blank" href="https://github.com/DeltaBalances/DeltaBalances.github.io">GitHub</a> or
+          <a target="_blank" href="https://reddit.com/u/deltabalances">Reddit</a>
+          <br> Buy me a beer:
+          <a href="https://etherscan.io/address/0xf6E914D07d12636759868a61E52973d17ED7111B" target="_blank">0xf6E914D07d12636759868a61E52973d17ED7111B</a>
+        </p>
+      </footer>
+
+      <!-- Control Sidebar -->
+      <aside class="control-sidebar control-sidebar-dark">
+        <!-- Create the tabs -->
+        <ul class="nav nav-tabs nav-justified control-sidebar-tabs">
+          <li class="active">
+            <a href="#control-sidebar-home-tab" data-toggle="tab">
+              <i class="fa fa-home"></i>
+            </a>
+          </li>
+          <li>
+            <a href="#control-sidebar-settings-tab" data-toggle="tab">
+              <i class="fa fa-gears"></i>
+            </a>
+          </li>
+        </ul>
+        <!-- Tab panes -->
+        <div class="tab-content">
+          <!-- Home tab content -->
+          <div class="tab-pane active" id="control-sidebar-home-tab">
+            <h3 class="control-sidebar-heading">Active address</h3>
+            <ul class="control-sidebar-menu">
+              <li>
+                <a href="" onclick="return false" style="pointer-events: none;">
+                  <i id="currentAddrImg" class="menu-icon bg-red" style="width:32px; height:32px;"></i>
+                  <div class="menu-info">
+                    <h4 id="currentAddr" class="control-sidebar-subheading">0x......</h4>
+                    <p id="currentAddrDescr">Input address</p>
+                  </div>
+                </a>
+              </li>
+              <li id="walletInfo" class="hidden">
+                <a id="etherscan" href="#" target="_blank" class="menu-info control-sidebar-subheading">
+                  Etherscan
+                  <i class="fa fa-link pull-right"></i>
+                </a>
+                <a onclick="forget()" id="forget" href="#" class="menu-info control-sidebar-subheading">
+                  Forget
+                  <i class="fa fa-trash-o pull-right text-red"></i>
+                </a>
+                <a onclick="save()" id="save" href="#" class="hidden menu-info control-sidebar-subheading">
+                  Save
+                  <i class="fa fa-save pull-right text-blue"></i>
+                </a>
+              </li>
+            </ul>
+
+            <div id="savedSection" class="hidden">
+              <h3 class="control-sidebar-heading">Saved address</h3>
+              <ul class="control-sidebar-menu">
+                <li>
+                  <a onclick="loadSaved()" href="#">
+                    <i id="savedImage" class="menu-icon bg-red" style="width:32px; height:32px;"></i>
+                    <div class="menu-info">
+                      <h4 id="savedAddress" class="control-sidebar-subheading">0x12345678</h4>
+                      <p>Saved</p>
+                    </div>
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div id="metamaskSection" class="hidden">
+              <h3 class="control-sidebar-heading">Detected Address</h3>
+              <ul class="control-sidebar-menu">
+                <li>
+                  <a onclick="loadMetamask()" href="#">
+                    <i id="metamaskImage" class="menu-icon bg-red" style="width:32px; height:32px;"></i>
+                    <div class="menu-info">
+                      <h4 id="metamaskAddress" class="control-sidebar-subheading">0x12345678</h4>
+                      <p>Metamask</p>
+                    </div>
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+
+          <!-- /.tab-pane -->
+          <!-- Settings tab content -->
+          <div class="tab-pane" id="control-sidebar-settings-tab">
+            <form>
+              <h3 class="control-sidebar-heading">Nothing here yet</h3>
+            </form>
+          </div>
+          <!-- /.tab-pane -->
+        </div>
+      </aside>
+      <!-- /.control-sidebar -->
+      <div class="control-sidebar-bg"></div>
+    </div>
+    <!-- ./wrapper -->
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-116708935-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+
+      // track amount of visits, only when hosted on github
+      if (window.location.origin.indexOf('.github.io') !== -1) {
+        gtag('js', new Date());
+        gtag('config', 'UA-116708935-1');
+      }
+
+    </script>
+</body>
+
+</html>
