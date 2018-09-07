@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<!-- Bootstrap meta tags -->
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="description" content="Doesn't look like anything to me... " />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Delta Balances</title>
+
+	<!-- Bootstrap js -->
+	<script type="text/javascript" src="../js/jquery-3.2.1.min.js"></script>
+	<!--<script src="js/bootstrap.min.js"></script> -->
+
+    <script src="./exchangeTokens.js"></script>
+	<script src="../backupTokens.js"></script>
+
+	<!-- Bootstrap, bootstrap-theme, fontawesome & custom css -->
+	<!--<link href="css/combinedStyles.css" rel="stylesheet">-->
+
+</head>
+
+<body>
+	A quick script to get a big list of tokens
+	<ul>
+		<li> myetherwallet's ethTokens</li>
+		<li> myCrypto's ethTokens</li>
+		<li> Tokens deposited in exchange contracts accoring to ethplorer.io (Filter tokens on >=10 deposited and >=100 token holders.)</li>
+
+	</ul>
+
+
+	<script>
+		var customTokens = {};
+        var idexBlock = {};
+
+		function parseMewTokens(array) {
+			for (var i = 0; i < array.length; i++) {
+				var customToken = array[i];
+				if (customToken) {
+                    let token = {
+                        symbol : escapeHtml(customToken.symbol),
+                        address : customToken.address.toLowerCase(),
+                        decimal : Number(customToken.decimal),
+                        name: undefined
+                    };
+                    if(customToken.name) {
+                        token.name = escapeHtml(customToken.name);
+                    } else {
+                        delete token.name;
+                    }
+                    if(customToken.Binance) {
+                        token.Binance = customToken.Binance;
+                    }
+                    
+                    if(customToken.locked) {
+                        token.locked = true;
+                    } 
+                    if (customToken.blocked) {
+                        token.blocked = Number(customToken.blocked);
+                    }
+                    if (customToken.killed) {
+                        token.killed = true;
+                    }
+                    if (customToken.spam) {
+                        token.spam = true;
+                    }
+					
+					if (!customTokens[token.address]) {
+						customTokens[token.address] = token;
+					}
+				}
+			}
+		}
+        
+        function parseEDTokens(array, exchange) {
+			for (var i = 0; i < array.length; i++) {
+				let EDtoken = array[i];
+                if (EDtoken) {
+                
+                    if(!EDtoken.decimals)
+                        EDtoken.decimals = 0;
+                        
+                    let token = {
+                        symbol : escapeHtml(EDtoken.name),
+                        address : EDtoken.addr.toLowerCase(),
+                        decimal : Number(EDtoken.decimals), 
+                    };
+                    if(EDtoken.fullName && EDtoken.fullName !== "" && EDtoken.name != EDtoken.fullName && EDtoken.fullName != "") {
+                        token.name = escapeHtml(EDtoken.fullName);
+                    } else if(EDtoken.name2 && EDtoken.name2 !== "" && EDtoken.name != EDtoken.name2 && EDtoken.name2 != "") {
+                        token.name = escapeHtml(EDtoken.name2);
+                    }
+                    
+                    if(exchange == 'IDEX' && idexBlock[token.address]) {
+                        token['blockIDEX'] = true;
+                    } else {
+                        token[exchange] = token.symbol;
+                    }
+                    
+					if (!customTokens[token.address]) {
+						customTokens[token.address] = token;
+					} else {
+                        if(exchange == 'IDEX' && idexBlock[token.address]) {
+                            customTokens[token.address]['blockIDEX'] = true;
+                        }
+                        else if(!customTokens[token.address][exchange]) {
+                            customTokens[token.address][exchange] = token.symbol;   
+                        }
+                        if(token.name && token.name != customTokens[token.address].symbol && !customTokens[token.address].name) {
+                            customTokens[token.address].name = token.name;
+                        }
+                    }
+				}
+			}
+		}
+        
+         function parseDDEXTokens(array) {
+			for (var i = 0; i < array.length; i++) {
+				let ddexToken = array[i];
+                if (ddexToken) {
+                
+                    if(!ddexToken.decimals)
+                        ddexToken.decimals = 0;
+                        
+                    let token = {
+                        symbol : escapeHtml(ddexToken.symbol),
+                        address : ddexToken.address.toLowerCase(),
+                        decimal : Number(ddexToken.decimals),
+                    };
+                    token.DDEX = token.symbol;
+                    
+					if (!customTokens[token.address]) {
+						customTokens[token.address] = token;
+					} else {
+                        if(!customTokens[token.address].DDEX) {
+                            customTokens[token.address].DDEX = token.symbol;
+                        }
+                    }
+				}
+			}
+		}
+        
+        function parseRadarTokens(array) {
+			for (var i = 0; i < array.length; i++) {
+				let radarToken = array[i];
+                if (radarToken) {
+                
+                    if(!radarToken.decimals)
+                        radarToken.decimals = 0;
+                        
+                    let token = {
+                        symbol : escapeHtml(radarToken.symbol),
+                        address : radarToken.address.toLowerCase(),
+                        decimal : Number(radarToken.decimals),
+                        name: escapeHtml(radarToken.name)
+                    };
+                    token.Radar = token.symbol;
+                    
+					if (!customTokens[token.address]) {
+						customTokens[token.address] = token;
+					} else {
+                        if(!customTokens[token.address].Radar) {
+                            customTokens[token.address].Radar = token.symbol;
+                        }
+                    }
+				}
+			}
+		}
+        
+           function parseKyberTokens(array) {
+			for (var i = 0; i < array.length; i++) {
+				let kyberToken = array[i];
+                if (kyberToken) {
+                
+                    if(!kyberToken.decimals)
+                        kyberToken.decimals = 0;
+                        
+                    let token = {
+                        symbol : escapeHtml(kyberToken.symbol),
+                        address : kyberToken.address.toLowerCase(),
+                        decimal : Number(kyberToken.decimals),
+                        name: escapeHtml(kyberToken.name)
+                    };
+                    token.Kyber = token.symbol;
+                    
+					if (!customTokens[token.address]) {
+						customTokens[token.address] = token;
+					} else {
+                        if(!customTokens[token.address].Kyber) {
+                            customTokens[token.address].Kyber = token.symbol;
+                        }
+                    }
+				}
+			}
+		}
+
+
+		function parseEthplorer(response) {
+			for (let i = 0; i < response.tokens.length; i++) {
+                let tokenResponse = response.tokens[i];
+				let tok = response.tokens[i].tokenInfo;
+				let addr = tok.address.toLowerCase();
+                if (!customTokens[addr]){ 
+                
+                    if(tok.symbol && tokenResponse.balance > 10 && tokenResponse.balance < (Number(tok.totalSupply) / 2)) {
+                        
+                        if(tok.price) {
+                            addToken(tok);
+                        }
+                        else if(tok.holdersCount && tok.holdersCount > 100) {
+                            addToken(tok);
+                        } 
+                    }
+                
+                    function addToken(token) {
+                        if (token.symbol !== token.name && token.name !== "") {
+                            customTokens[addr] = { symbol: escapeHtml(token.symbol), address: addr,  decimal: Number(token.decimals), name: escapeHtml(token.name) };
+                        } else {
+                            customTokens[addr] = { symbol: escapeHtml(token.symbol), address: addr, decimal: Number(token.decimals) };
+                        }
+                    }
+      
+				} else if(tok && tok.holdersCount) {
+                    if(Number(tok.holdersCount) < 100) {
+                        if(!customTokens[addr].blocked)
+                            customTokens[addr].blocked = 1;
+                    } else if(tok.holdersCount && Number(tok.holdersCount) >= 100 && customTokens[addr].blocked && customTokens[addr].blocked == 1 ) {
+                        delete customTokens[addr].blocked;
+                    }
+                }
+                
+                
+				if (customTokens[addr] && !customTokens[addr].name && tok.symbol !== tok.name && tok.name !== "") {
+					customTokens[addr].name = escapeHtml(tok.name);
+				}
+
+				if (customTokens[addr] && customTokens[addr].decimal !== tok.decimals) {
+					customTokens[addr].decimal = Number(tok.decimals);
+				}
+
+				/*  if(customTokens[addr] && customTokens[addr].symbol !== tok.symbol) {
+					  customTokens[addr].fixSymbol = tok.symbol;
+				  }
+				  */
+			} 
+		}
+
+        
+         for(let i = 0; i < idexDelisted.length; i++) {
+            if(idexDelisted[i] && idexDelisted[i].addr) {
+                idexBlock[idexDelisted[i].addr] = true;
+            }
+        }
+        
+		//parse existing custom tokens from offlineCustomTokens (backupTokens.js)
+		parseMewTokens(offlineCustomTokens);
+        
+        // parse exisiting tokens from etherdelta/forkdelta
+        parseEDTokens(EDofflineTokens, 'EtherDelta');
+        parseEDTokens(forkOfflineTokens, 'ForkDelta');
+        parseEDTokens(idexOfflineTokens, 'IDEX');
+        parseDDEXTokens(ddexOfflineTokens);
+        parseRadarTokens(radarOfflineTokens);
+        parseKyberTokens(kyberOfflineTokens);
+        
+		//get list of tokens from myetherwallet & mycrypto
+		function getCustomTokens() {
+
+			$('#output').html('loading.... (slow)');
+		//	let mewTokens = undefined;
+		//	let mcTokens = undefined;
+			let ethplorerED = undefined;
+			let ethplorerIdex = undefined;
+            let ethplorerStore = undefined;
+            let ethplorerDdex = undefined;
+			let loaded = 0;
+
+			function done() {
+
+				if (loaded >= 4) {
+					if (/*mewTokens && mcTokens &&*/ ethplorerED && ethplorerIdex && ethplorerStore && ethplorerDdex) {
+						//parseMewTokens(mewTokens);
+						//parseMewTokens(mcTokens);
+						parseEthplorer(ethplorerED);
+						parseEthplorer(ethplorerIdex);
+                        parseEthplorer(ethplorerStore);
+						parseEthplorer(ethplorerDdex);
+
+						let customTokensList = Object.values(customTokens);
+
+						customTokensList = customTokensList.sort(function (a, b) {
+							return (a.symbol + a.address).localeCompare(b.symbol + b.address);
+						})
+
+						let outputString = "[<br>";
+						for (let i = 0; i < customTokensList.length; i++) {
+							let str = JSON.stringify(customTokensList[i]);
+							outputString += str + ",<br>";
+						}
+						outputString += "]";
+						outputString = outputString.replace(/"address"/g, "address");
+						outputString = outputString.replace(/"symbol"/g, 'symbol');
+						outputString = outputString.replace(/"decimal"/g, 'decimal');
+                        outputString = outputString.replace(/"name"/g, 'name');
+                        outputString = outputString.replace(/"locked"/g, 'locked');
+                        outputString = outputString.replace(/"blocked"/g, 'blocked');
+                        outputString = outputString.replace(/"killed"/g, 'killed');
+                        outputString = outputString.replace(/"spam"/g, 'spam');
+                        outputString = outputString.replace(/"blockIDEX"/g, 'blockIDEX');
+						outputString = outputString.replace(/"Binance"/g, 'Binance');
+                        outputString = outputString.replace(/"EtherDelta"/g, 'EtherDelta');
+                        outputString = outputString.replace(/"ForkDelta"/g, 'ForkDelta');
+                        outputString = outputString.replace(/"IDEX"/g, 'IDEX');
+                        outputString = outputString.replace(/"DDEX"/g, 'DDEX');
+                        outputString = outputString.replace(/"Radar"/g, 'Radar');
+                        outputString = outputString.replace(/"Kyber"/g, 'Kyber');
+                        outputString = outputString.replace(/name:Kyber/g, 'name:"Kyber"');
+						outputString = outputString.replace(/{ /g, '{');
+						outputString = outputString.replace(/ }/g, '}');
+						outputString = outputString.replace(/, /g, ',');
+						outputString = outputString.replace(/: /g, ':');
+
+						$('#output').html(outputString);
+
+					} else {
+						$('#output').html('something went wrong');
+					}
+				} else {
+					$('#output').html('loading... , loaded ' + loaded + '/4');
+				}
+			}
+
+
+		/*	$.getJSON('https://rawgit.com/kvhnuke/etherwallet/mercury/app/scripts/tokens/ethTokens.json?' + Date.now()).done(function (data) {
+				loaded++;
+				mewTokens = data;
+				done();
+			}).fail(function () {
+				loaded++;
+				done();
+			});
+
+			$.getJSON('https://rawgit.com/MyCryptoHQ/mycrypto.com/master/app/scripts/tokens/ethTokens.json?' + Date.now()).done(function (data) {
+				loaded++;
+				mcTokens = data;
+				done();
+			}).fail(function () {
+				loaded++;
+				done();
+			});
+            */
+
+            let key = 'enrrf9840PPmQ31';
+            //etherdelta contract
+			$.getJSON('https://api.ethplorer.io/getAddressInfo/0x8d12A197cB00D4747a1fe03395095ce2A5CC6819?apiKey='+key).done(function (data) {
+				loaded++;
+				if (data && data.tokens)
+					ethplorerED = data;
+				done();
+			}).fail(function () {
+				loaded++;
+				done();
+			});
+            
+            //idex contract
+			$.getJSON('https://api.ethplorer.io/getAddressInfo/0x2a0c0DBEcC7E4D658f48E01e3fA353F44050c208?apiKey='+key).done(function (data) {
+				loaded++;
+				if (data && data.tokens)
+					ethplorerIdex = data;
+				done();
+			}).fail(function () {
+				loaded++;
+				done();
+			});
+            
+            //token store contract
+            $.getJSON('https://api.ethplorer.io/getAddressInfo/0x1ce7ae555139c5ef5a57cc8d814a867ee6ee33d8?apiKey='+key).done(function (data) {
+				loaded++;
+				if (data && data.tokens)
+					ethplorerStore = data;
+				done();
+			}).fail(function () {
+				loaded++;
+				done();
+			});
+            
+            //ddex admin address (fee receiver)
+            $.getJSON('https://api.ethplorer.io/getAddressInfo/0xe269e891a2ec8585a378882ffa531141205e92e9?apiKey='+key).done(function (data) {
+				loaded++;
+				if (data && data.tokens)
+					ethplorerDdex = data;
+				done();
+			}).fail(function () {
+				loaded++;
+				done();
+			});
+		}
+
+
+		function escapeHtml(text) {
+			var map = {
+				'&': '&amp;',
+				'<': '&lt;',
+				'>': '&gt;',
+				'"': '&quot;',
+				"'": '&#039;',
+				"{": '',
+				"}": '',
+			};
+
+			return text.replace(/[&<>"']/g, function (m) { return map[m]; }).trim();
+		}
+
+	</script>
+
+
+	<button id="getbutton" onclick="getCustomTokens()">Load tokens!</button>
+
+	<div id="output">
+
+
+	</div>
+
+</body>
+
+</html>
